@@ -37,8 +37,42 @@ const bookingForm = document.querySelector('.form');
 if (bookingForm) {
     bookingForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        // In production, this would submit to a backend
-        alert('Thank you for your request! We will contact you shortly.');
+        const formData = new FormData(bookingForm);
+
+        const values = {
+            name: formData.get('name')?.toString().trim() || '',
+            phone: formData.get('phone')?.toString().trim() || '',
+            email: formData.get('email')?.toString().trim() || '',
+            date: formData.get('date')?.toString().trim() || '',
+            serviceType: formData.get('service-type')?.toString().trim() || '',
+            vehicleChoice: formData.get('vehicle-choice')?.toString().trim() || '',
+            tripDetails: formData.get('trip-details')?.toString().trim() || ''
+        };
+
+        const lines = [
+            'New Booking Request',
+            '',
+            `Name: ${values.name}`,
+            `Phone: ${values.phone}`,
+            `Email: ${values.email}`,
+            `Date: ${values.date}`,
+            `Service Type: ${values.serviceType}`,
+            `Vehicle Choice: ${values.vehicleChoice}`,
+            'Trip Details:',
+            values.tripDetails
+        ];
+
+        const message = lines.join('\n');
+        const subject = encodeURIComponent('Booking Request - Raj Limo Service');
+        const body = encodeURIComponent(message);
+
+        const mailTo = `mailto:adipsingh96@gmail.com?subject=${subject}&body=${body}`;
+        const whatsappText = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/16095925001?text=${whatsappText}`;
+
+        // Open email client and WhatsApp with prefilled details.
+        window.location.href = mailTo;
+        window.open(whatsappUrl, '_blank', 'noopener');
     });
 }
 
@@ -60,6 +94,7 @@ class ServicesCarousel {
         this.currentIndex = 0; // index in track pages including clones
         this.autoPlayInterval = null;
         this.touchStartX = null;
+        this.isAnimating = false;
 
         this.handleResize = this.handleResize.bind(this);
         this.handleTransitionEnd = this.handleTransitionEnd.bind(this);
@@ -160,18 +195,24 @@ class ServicesCarousel {
 
     next() {
         if (this.pagesCount <= 1) return;
+        if (this.isAnimating) return;
+        this.isAnimating = true;
         this.currentIndex += 1;
         this.jumpToIndex(this.currentIndex, true);
     }
 
     prev() {
         if (this.pagesCount <= 1) return;
+        if (this.isAnimating) return;
+        this.isAnimating = true;
         this.currentIndex -= 1;
         this.jumpToIndex(this.currentIndex, true);
     }
 
     goToPage(pageIndex) {
         if (this.pagesCount <= 1) return;
+        if (this.isAnimating) return;
+        this.isAnimating = true;
         this.currentIndex = pageIndex + 1; // account for leading clone
         this.jumpToIndex(this.currentIndex, true);
     }
@@ -183,13 +224,18 @@ class ServicesCarousel {
         if (this.currentIndex === 0) {
             this.currentIndex = this.pagesCount;
             this.jumpToIndex(this.currentIndex, false);
+            this.isAnimating = false;
             return;
         }
 
         if (this.currentIndex === this.pagesCount + 1) {
             this.currentIndex = 1;
             this.jumpToIndex(this.currentIndex, false);
+            this.isAnimating = false;
+            return;
         }
+
+        this.isAnimating = false;
     }
 
     createIndicators() {
